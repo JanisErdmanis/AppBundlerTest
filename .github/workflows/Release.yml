@@ -6,9 +6,9 @@ on:
       - 'v*'
   workflow_dispatch:  # Allows manual testing
   pull_request:  # Test builds on PRs (but skip release step)
-
 jobs:
   build:
+    name: Build release binary
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -16,42 +16,37 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
+            asset_name: my-widget-linux
           - os: macos-latest
             platform: macos
+            asset_name: my-widget-macos
     
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Build for ${{ matrix.platform }}
-      run: |
-        # Build your project (replace with your build commands)
-        mkdir build
-        echo "Hello from ${{ matrix.platform }}" > build/app.txt
-        
-        # Create platform-specific archive
-        tar -czf release-${{ matrix.platform }}.tar.gz build/
-        
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-${{ matrix.platform }}
-        path: release-${{ matrix.platform }}.tar.gz
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')  # Only create release on tags
-    
-    steps:
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-    
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          release-linux/release-linux.tar.gz
-          release-macos/release-macos.tar.gz
-        draft: true  # Creates draft release for testing
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get release
+        id: get_release
+        uses: bruceadams/get-release@v1.3.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Create and compress text file
+        run: |
+          mkdir -p build
+          echo "Hello from ${{ matrix.platform }}!" > build/hello-${{ matrix.platform }}.txt
+          echo "Built on: $(date)" >> build/hello-${{ matrix.platform }}.txt
+          echo "OS: ${{ matrix.os }}" >> build/hello-${{ matrix.platform }}.txt
+          
+          # Create tar.gz archive
+          tar -czf hello-${{ matrix.platform }}.tar.gz -C build hello-${{ matrix.platform }}.txt
+
+      - name: Upload compressed file
+        uses: actions/upload-release-asset@v1.0.2
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.get_release.outputs.upload_url }}
+          asset_path: ./hello-${{ matrix.platform }}.tar.gz
+          asset_name: hello-${{ matrix.platform }}.tar.gz
+          asset_content_type: application/gzip
