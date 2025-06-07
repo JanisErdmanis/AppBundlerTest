@@ -1,11 +1,15 @@
 name: Release
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:  # Allows manual testing
-  pull_request:  # Test builds on PRs (but skip release step)
+  release:
+    types: [created]
+  workflow_dispatch:  # For manual testing
+    inputs:
+      tag:
+        description: 'Release tag'
+        required: true
+        default: 'v0.0.1'
+
 jobs:
   build:
     name: Build release binary
@@ -25,12 +29,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get release
-        id: get_release
-        uses: bruceadams/get-release@v1.3.2
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
       - name: Create and compress text file
         run: |
           mkdir -p build
@@ -42,11 +40,7 @@ jobs:
           tar -czf hello-${{ matrix.platform }}.tar.gz -C build hello-${{ matrix.platform }}.txt
 
       - name: Upload compressed file
-        uses: actions/upload-release-asset@v1.0.2
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} hello-${{ matrix.platform }}.tar.gz
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.get_release.outputs.upload_url }}
-          asset_path: ./hello-${{ matrix.platform }}.tar.gz
-          asset_name: hello-${{ matrix.platform }}.tar.gz
-          asset_content_type: application/gzip
+          GH_TOKEN: ${{ github.token }}
