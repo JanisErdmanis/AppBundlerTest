@@ -1,11 +1,9 @@
-name: Release
+name: Build Release Assets
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:  # Allows manual testing
-  pull_request:  # Test builds on PRs (but skip release step)
+  release:
+    types: [created]
+
 jobs:
   build:
     name: Build release binary
@@ -37,6 +35,7 @@ jobs:
 
       - name: Upload compressed file
         run: |
-          gh release upload ${{ github.event.release.tag_name }} hello-${{ matrix.platform }}.tar.gz
+          echo "Uploading to release: ${{ github.event.release.tag_name }}"
+          gh release upload "${{ github.event.release.tag_name }}" hello-${{ matrix.platform }}.tar.gz
         env:
           GH_TOKEN: ${{ github.token }}
