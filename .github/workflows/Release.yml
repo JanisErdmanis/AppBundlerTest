@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        prefix: [""]  # Default empty prefix    
+        prefix: ""  # Default empty prefix    
         include:
           # macOS builds
           - runner: macos-latest
