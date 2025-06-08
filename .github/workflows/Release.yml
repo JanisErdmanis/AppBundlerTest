@@ -5,13 +5,12 @@ on:
     types: [created]
 
 jobs:
-  # Job 1: Build for multiple platforms and architectures
+  # Job 1: Build only (no write permissions, no tokens)
   build:
     name: Build ${{ matrix.suffix }}
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        prefix: [""]  # Default empty prefix
         include:
           # macOS builds
           - runner: macos-latest
@@ -20,15 +19,15 @@ jobs:
           - runner: macos-latest
             binary_platform: MacOS(:aarch64)
             suffix: -macos-aarch64.dmg
+          
           # Linux builds
           - runner: ubuntu-latest
             binary_platform: Linux(:x86_64)
             suffix: -linux-x86_64.snap
-            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
-          - runner: ubuntu-24.04-arm
+          - runner: ubuntu-latest
             binary_platform: Linux(:aarch64)
             suffix: -linux-aarch64.snap
-            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
+          
           # Windows builds
           - runner: windows-latest
             binary_platform: Windows(:x86_64)
@@ -49,15 +48,10 @@ jobs:
       - name: Install AppBundler
         run: julia -e 'using Pkg; Pkg.add(url="https://github.com/PeaceFounder/AppBundler.jl", rev="ci-refactor")'
 
-      - name: Install Xvfb (Linux only)
-        if: contains(matrix.prefix, 'xvfb-run')
-        run: sudo apt-get update && sudo apt-get install -y xvfb
-
       - name: Build installer
         run: |
           mkdir -p build
-          ${{ matrix.prefix }} julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=true)'
-
+          julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=false)'
       # Store the built file as an artifact
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
