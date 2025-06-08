@@ -52,7 +52,7 @@ jobs:
       - name: Build installer
         run: |
           mkdir -p build
-          ${{ matrix.prefix }} julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=true)'
+          ${{ matrix.prefix }}julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=true)'
       # Store the built file as an artifact
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
