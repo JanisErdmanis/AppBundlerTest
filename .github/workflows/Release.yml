@@ -11,28 +11,31 @@ jobs:
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        prefix: ""  # Default empty prefix    
         include:
           # macOS builds
           - runner: macos-latest
             binary_platform: MacOS(:x86_64)
             suffix: -macos-x86_64.dmg
+            prefix: ""  # Default empty prefix    
           - runner: macos-latest
             binary_platform: MacOS(:aarch64)
             suffix: -macos-aarch64.dmg
-          
+            prefix: ""  # Default empty prefix    
           # Linux builds
           - runner: ubuntu-latest
             binary_platform: Linux(:x86_64)
             suffix: -linux-x86_64.snap
+            prefix: ""  # Default empty prefix    
           - runner: ubuntu-24.04-arm
             binary_platform: Linux(:aarch64)
             suffix: -linux-aarch64.snap
+            prefix: ""  # Default empty prefix    
           
           # Windows builds
           - runner: windows-latest
             binary_platform: Windows(:x86_64)
             suffix: -windows-x86_64.msix
+            prefix: ""  # Default empty prefix    
     
     steps:
       - name: Checkout code
