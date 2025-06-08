@@ -7,38 +7,58 @@ on:
 jobs:
   # Job 1: Build only (no write permissions, no tokens)
   build:
-    name: Build files
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.suffix }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
-        os: [macos-latest]
         include:
-          - os: macos-latest
-            platform: macos
+          # macOS builds
+          - runner: macos-latest
+            binary_platform: MacOS(:x86_64)
+            suffix: -macos-x86_64.dmg
+          - runner: macos-latest
+            binary_platform: MacOS(:aarch64)
+            suffix: -macos-aarch64.dmg
+          
+          # Linux builds
+          - runner: ubuntu-latest
+            binary_platform: Linux(:x86_64)
+            suffix: -linux-x86_64.snap
+          - runner: ubuntu-latest
+            binary_platform: Linux(:aarch64)
+            suffix: -linux-aarch64.snap
+          
+          # Windows builds
+          - runner: windows-latest
+            binary_platform: Windows(:x86_64)
+            suffix: -windows-x86_64.msix
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - uses: julia-actions/setup-julia@v2
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
         with:
           version: '1.11'
 
-      - uses: julia-actions/cache@v1
+      - name: Cache Julia packages
+        uses: julia-actions/cache@v1
+      
       - name: Install AppBundler
         run: julia -e 'using Pkg; Pkg.add(url="https://github.com/PeaceFounder/AppBundler.jl", rev="ci-refactor")'
 
       - name: Build installer
         run: |
           mkdir -p build
-          julia -e 'using AppBundler; using Pkg.BinaryPlatforms: MacOS; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(MacOS(:x86_64), qmlapp, "build/qmlapp-${{ matrix.platform }}.dmg", precompile=false)'
+          julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=false)'
 
-      # Store the built file as an artifact (not uploaded to release yet)
+      # Store the built file as an artifact
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-${{ matrix.platform }}
-          path: build/qmlapp-${{ matrix.platform }}.dmg
+          name: build${{ matrix.suffix }}
+          path: build/qmlapp${{ matrix.suffix }}
           retention-days: 1
 
   # Job 2: Upload all artifacts in a single job
