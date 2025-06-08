@@ -5,15 +5,16 @@ on:
     types: [created]
 
 jobs:
-  # Job 1: Build only (no write permissions, no tokens)
+  # Job 1: Build for multiple platforms and architectures
   build:
     name: Build ${{ matrix.suffix }}
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
+        prefix: [""]  # Default empty prefix
         include:
           # macOS builds
-          - runner: macos-latest
+          - runner: macos-13
             binary_platform: MacOS(:x86_64)
             suffix: -macos-x86_64.dmg
           - runner: macos-latest
@@ -24,9 +25,11 @@ jobs:
           - runner: ubuntu-latest
             binary_platform: Linux(:x86_64)
             suffix: -linux-x86_64.snap
-          - runner: ubuntu-latest
+            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
+          - runner: ubuntu-24.04-arm
             binary_platform: Linux(:aarch64)
             suffix: -linux-aarch64.snap
+            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
           
           # Windows builds
           - runner: windows-latest
@@ -48,10 +51,14 @@ jobs:
       - name: Install AppBundler
         run: julia -e 'using Pkg; Pkg.add(url="https://github.com/PeaceFounder/AppBundler.jl", rev="ci-refactor")'
 
+      - name: Install Xvfb (Linux only)
+        if: contains(matrix.prefix, 'xvfb-run')
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
       - name: Build installer
         run: |
           mkdir -p build
-          julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=false)'
+          ${{ matrix.prefix }} julia -e 'using AppBundler; using Pkg.BinaryPlatforms; qmlapp = joinpath(dirname(dirname(pathof(AppBundler))), "examples/qmlapp"); AppBundler.build_app(${{ matrix.binary_platform }}, qmlapp, "build/qmlapp${{ matrix.suffix }}", precompile=true)'
 
       # Store the built file as an artifact
       - name: Upload build artifact
