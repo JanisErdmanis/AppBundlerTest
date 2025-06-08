@@ -20,21 +20,19 @@ jobs:
           - runner: macos-latest
             binary_platform: MacOS(:aarch64)
             suffix: -macos-aarch64.dmg
-          
           # Linux builds
-          # - runner: ubuntu-latest
-          #   binary_platform: Linux(:x86_64)
-          #   suffix: -linux-x86_64.snap
-          #   prefix: "xvfb-run -s '-screen 0 1024x768x24'"
-          # - runner: ubuntu-24.04-arm
-          #   binary_platform: Linux(:aarch64)
-          #   suffix: -linux-aarch64.snap
-          #   prefix: "xvfb-run -s '-screen 0 1024x768x24'"
-          
-          # # Windows builds
-          # - runner: windows-latest
-          #   binary_platform: Windows(:x86_64)
-          #   suffix: -windows-x86_64.msix
+          - runner: ubuntu-latest
+            binary_platform: Linux(:x86_64)
+            suffix: -linux-x86_64.snap
+            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
+          - runner: ubuntu-24.04-arm
+            binary_platform: Linux(:aarch64)
+            suffix: -linux-aarch64.snap
+            prefix: "xvfb-run -s '-screen 0 1024x768x24'"
+          # Windows builds
+          - runner: windows-latest
+            binary_platform: Windows(:x86_64)
+            suffix: -windows-x86_64.msix
     
     steps:
       - name: Checkout code
