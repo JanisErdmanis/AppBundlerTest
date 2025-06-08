@@ -26,7 +26,7 @@ jobs:
 
       - uses: julia-actions/cache@v1
       - name: Install AppBundler
-        run: julia -e 'using Pkg; Pkg.add(url="https://github.com/PeaceFounder/AppBundler.jl/tree/ci-refactor")'
+        run: julia -e 'using Pkg; Pkg.add(url="https://github.com/PeaceFounder/AppBundler.jl", rev="ci-refactor")'
 
       - name: Build installer
         run: |
